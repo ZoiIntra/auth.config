@@ -1,0 +1,135 @@
+local PandaAuth = {}
+-- ----------------------------------------------------
+--        Reliability Update
+-- ----------------------------------------------------
+
+getgenv().LibVersion = "2.0.7"
+getgenv().AllowLibNotification = true
+getgenv().CustomLogo = "rbxassetid://14317130710"
+getgenv().DebugMode = true
+
+local LOADSTRING  = clonefunction(loadstring)
+local HttpGet  = clonefunction(game.HttpGet)
+local http_service = cloneref(game:GetService("HttpService"))
+local rbx_analytics_service = cloneref(game:GetService("RbxAnalyticsService"))
+local starter_gui_service = cloneref(game:GetService("StarterGui"))
+local players_service = cloneref(game:GetService("Players"))
+
+local server_configuration = "https://auth.pandadevelopment.net"
+
+function DebugText(text)
+    if getgenv().DebugMode then
+        print("[ DEBUG ] - "..text)
+    end
+end
+
+
+local _tostring = clonefunction(tostring)
+
+local function GetHardwareID(service)
+        local jsonData = http_service:JSONDecode(HttpGet(server_configuration .. "/serviceapi?service=" .. service .. "&command=getconfig", true))
+        local client_id = rbx_analytics_service:GetClientId()
+    
+        if jsonData.AuthMode == "playerid" then
+            return _tostring(players_service.LocalPlayer.UserId) .."_MOBILE"
+        elseif jsonData.AuthMode == "hwidplayer" then
+            local hashedata = _tostring(HttpGet(server_configuration.."/serviceapi?service="..service.."&command=Hashed&param=".. players_service.LocalPlayer.UserId..client_id, true))
+            return hashedata
+        elseif jsonData.AuthMode == "hwidonly" then
+            return client_id
+        elseif jsonData.AuthMode == "iponly" then       
+            return jsonData.IPToken
+        else
+            return client_id
+        end
+end
+
+local function PandaLibNotification(message)
+    if AllowLibNotification then
+        starter_gui_service:SetCore("SendNotification", {
+            Title = "Key System ",
+            Text = user_link,
+            Duration = 6,
+            Icon = CustomLogo
+        })
+    end
+end
+
+function PandaAuth:GetLink(Exploit)
+    local user_link = server_configuration .. "/getkey?service=" .. Exploit .. "&hwid=" .. GetHardwareID(Exploit);
+    PandaLibNotification(user_link)
+    DebugText("Get Key: "..user_link)
+    return user_link
+end
+
+local function PandaSHA256(stringbrub)
+    local hashed = HttpGet(server_configuration .. "/serviceapi?service=" .. service .. "command=hashed&param="..stringbrub)
+    return hashed
+end
+
+function PandaAuth:ValidateKey(service_name, Key)
+    local combined_url = server_configuration .. "/validate?service=" .. service_name .. "&key=" .. Key .. "&hwid=" .. GetHardwareID(service_name)
+    local response = HttpGet(combined_url) 
+    DebugText("Encrypted Data: "..response)
+    local decryption = HttpGet(server_configuration .. "/serviceapi?service=" .. service .. "&command=decrypt&param="..response)
+    local jsonTable = http_service:JSONDecode(decryption)
+    
+    if jsonTable.DEV_ID == PandaSHA256(GetHardwareID(service_name)) and jsonTable.status == PandaSHA256("authenticated") then
+        DebugText("Key is Authenticated")
+        return true
+    else
+        DebugText("Key is Not Authenticated")
+        PandaLibNotification("Unable to Validate the Key, See for Developer Console")   
+        return false
+    end
+end
+
+-- PROTECT HTTPGET
+pcall(game.HttpGet, game, getgenv().setmetatable({}, {
+    __tostring = function()
+        while true do end;return "HAHAHAHAHAHA"
+    end,
+}))
+-- SECOND PROTECT MAYBE WORK
+req(getgenv().setmetatable({
+    Url = "https://example.net",
+	Method = "GET"
+},{
+    __newindex = function(self,key,value)
+        return rawset(self,key,setmetatable({},{
+            __tostring = function()
+                while true do end;return "HAHAHAHAHAHA"
+            end
+        }))
+    end,
+    __tostring = function()
+        while true do end;return "HAHAHAHAHAHA"
+    end,
+    __len = function()
+        while true do end;
+    end,
+    __concat = function()
+        spawn(function()
+            game:Shutdown()
+        end)
+        while true do end;
+    end,
+}))
+
+-- Anti modify
+local antisetreadonly
+antisetreadonly = hookfunction(getgenv().setreadonly,function(x,y)
+    if x == Auth then
+        return antisetreadonly(x,true)
+    end
+    return antisetreadonly(x,y)
+end)
+
+setmetatable(Auth, {
+    __newindex = function()
+    end,
+    __metatable = false
+})
+setreadonly(Auth,true)
+
+return PandaAuth
