@@ -125,11 +125,6 @@ antisetreadonly = hookfunction(getgenv().setreadonly,function(x,y)
     return antisetreadonly(x,y)
 end)
 
-getgenv().setmetatable(Auth, {
-    __newindex = function()
-    end,
-    __metatable = false
-})
 setreadonly(Auth,true)
 
 return PandaAuth
