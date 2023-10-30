@@ -14,7 +14,7 @@ local http_service = cloneref(game:GetService("HttpService"))
 local rbx_analytics_service = cloneref(game:GetService("RbxAnalyticsService"))
 local starter_gui_service = cloneref(game:GetService("StarterGui"))
 local players_service = cloneref(game:GetService("Players"))
-local req = cloneref(http_request or request)
+local req = http_request or request
 local server_configuration = "https://auth.pandadevelopment.net"
 
 function DebugText(text)
